@@ -53,7 +53,7 @@ struct _GimpGrid
 
 struct _GimpGridClass
 {
-  GimpObjectClass  parent_class;
+  GimpObjectClass  parent_class; 
 };
 
 

@@ -69,7 +69,7 @@ G_DEFINE_TYPE_WITH_CODE (GimpGrid, gimp_grid, GIMP_TYPE_OBJECT,
 
 static void
 gimp_grid_class_init (GimpGridClass *klass)
-{
+{  
   GObjectClass *object_class = G_OBJECT_CLASS (klass);
   GimpRGB       black;
   GimpRGB       white;
