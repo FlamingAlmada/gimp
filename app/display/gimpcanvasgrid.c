@@ -202,11 +202,16 @@ gimp_canvas_grid_draw (GimpCanvasItem   *item,
   gint                   y0, y1, y2, y3;
   gint                   x_real, y_real;
   gint                   width, height;
+	gboolean shown;
 
 #define CROSSHAIR 2
 
   gimp_grid_get_spacing (private->grid, &xspacing, &yspacing);
   gimp_grid_get_offset  (private->grid, &xoffset,  &yoffset);
+	gimp_grid_get_shown( private->grid, &shown );
+
+	// If the grid's shown is off, skip drawing grid
+	if( !shown ){ return; }
 
   g_return_if_fail (xspacing > 0.0 &&
                     yspacing > 0.0);

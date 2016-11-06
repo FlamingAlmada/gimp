@@ -48,12 +48,13 @@ struct _GimpGrid
   gdouble        xoffset;
   gdouble        yoffset;
   GimpUnit       offset_unit;
+	gboolean			shown;
 };
 
 
 struct _GimpGridClass
 {
-  GimpObjectClass  parent_class; 
+  GimpObjectClass  parent_class;
 };
 
 
@@ -65,6 +66,8 @@ void           gimp_grid_get_spacing            (GimpGrid           *grid,
 void           gimp_grid_get_offset             (GimpGrid           *grid,
                                                  gdouble            *xoffset,
                                                  gdouble            *yoffset);
+void gimp_grid_get_shown (GimpGrid *grid, gboolean  *shown);
+
 
 const gchar  * gimp_grid_parasite_name          (void) G_GNUC_CONST;
 GimpParasite * gimp_grid_to_parasite            (const GimpGrid     *grid);

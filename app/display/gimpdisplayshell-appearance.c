@@ -109,8 +109,9 @@ gimp_display_shell_appearance_update (GimpDisplayShell *shell)
                                              options->show_layer_boundary);
   gimp_display_shell_set_show_guides        (shell,
                                              options->show_guides);
-  gimp_display_shell_set_show_grid          (shell,
-                                             options->show_grid);
+  //gimp_display_shell_set_show_grid          (shell,
+  //                                           options->show_grid);
+	gimp_display_shell_set_show_grid          (shell, TRUE);
   gimp_display_shell_set_show_sample_points (shell,
                                              options->show_sample_points);
   gimp_display_shell_set_padding            (shell,

@@ -234,6 +234,7 @@ gimp_grid_editor_constructed (GObject *object)
   gtk_widget_show (sizeentry);
 
   gtk_widget_show (hbox);
+
 }
 
 static void

@@ -49,7 +49,8 @@ enum
   PROP_SPACING_UNIT,
   PROP_XOFFSET,
   PROP_YOFFSET,
-  PROP_OFFSET_UNIT
+  PROP_OFFSET_UNIT,
+	PROP_SHOWN
 };
 
 
@@ -69,7 +70,7 @@ G_DEFINE_TYPE_WITH_CODE (GimpGrid, gimp_grid, GIMP_TYPE_OBJECT,
 
 static void
 gimp_grid_class_init (GimpGridClass *klass)
-{  
+{
   GObjectClass *object_class = G_OBJECT_CLASS (klass);
   GimpRGB       black;
   GimpRGB       white;
@@ -129,12 +130,11 @@ gimp_grid_class_init (GimpGridClass *klass)
                                  "offset-unit", NULL,
                                  FALSE, FALSE, GIMP_UNIT_INCH,
                                  GIMP_PARAM_STATIC_STRINGS);
+  GIMP_CONFIG_INSTALL_PROP_BOOLEAN( object_class, PROP_SHOWN,
+		"shown", NULL, FALSE, GIMP_PARAM_STATIC_STRINGS);
 }
 
-static void
-gimp_grid_init (GimpGrid *grid)
-{
-}
+static void gimp_grid_init (GimpGrid *grid){}
 
 static void
 gimp_grid_get_property (GObject      *object,
@@ -173,6 +173,9 @@ gimp_grid_get_property (GObject      *object,
     case PROP_OFFSET_UNIT:
       g_value_set_int (value, grid->offset_unit);
       break;
+		case PROP_SHOWN:
+			g_value_set_boolean (value, grid->shown);
+			break;
     default:
       G_OBJECT_WARN_INVALID_PROPERTY_ID (object, property_id, pspec);
       break;
@@ -219,6 +222,9 @@ gimp_grid_set_property (GObject      *object,
     case PROP_OFFSET_UNIT:
       grid->offset_unit = g_value_get_int (value);
       break;
+		case PROP_SHOWN:
+      grid->shown = g_value_get_boolean (value);
+      break;
     default:
       G_OBJECT_WARN_INVALID_PROPERTY_ID (object, property_id, pspec);
       break;
@@ -247,6 +253,14 @@ gimp_grid_get_offset (GimpGrid *grid,
   /* FIXME subpixel grid */
   if (xoffset) *xoffset = RINT (grid->xoffset);
   if (yoffset) *yoffset = RINT (grid->yoffset);
+}
+
+void
+gimp_grid_get_shown (GimpGrid *grid, gboolean  *shown)
+{
+  g_return_if_fail (GIMP_IS_GRID (grid));
+
+	*shown = grid->shown;
 }
 
 const gchar *

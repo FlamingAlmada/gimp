@@ -33,6 +33,8 @@
 #include "core/gimpimage.h"
 #include "core/gimpgrouplayer.h"
 #include "core/gimpprojection.h"
+#include "core/gimpimage-grid.h"
+#include "core/gimpgrid.h"
 
 #include "widgets/gimpactiongroup.h"
 #include "widgets/gimpcolordialog.h"
@@ -468,13 +470,25 @@ view_toggle_grid_cmd_callback (GtkAction *action,
                                gpointer   data)
 {
   GimpDisplayShell *shell;
-  gboolean          active = gtk_toggle_action_get_active (GTK_TOGGLE_ACTION (action));
-  return_if_no_shell (shell, data);
+	GimpImage *image;
+	GimpGrid  *grid;
+	gboolean shown;
+	gboolean active = gtk_toggle_action_get_active(GTK_TOGGLE_ACTION (action));;
 
-  if (active == gimp_display_shell_get_show_grid (shell))
-    return;
+  return_if_no_shell(shell, data);
 
-  gimp_display_shell_set_show_grid (shell, active);
+	// Prevents from firing twice
+	if (active == gimp_display_shell_get_show_grid (shell))
+	return;
+	
+	image = action_data_get_image(data);
+	grid = gimp_image_get_grid( image );
+	gimp_grid_get_shown( grid, &shown );
+
+	if(shown){printf("The grid was TRUE\n");}
+	else{printf("The grid was FALSE\n");}
+
+  g_object_set( grid, "shown", !shown, NULL );
 }
 
 void

@@ -1,0 +1,21 @@
+2016-11-05
+gimp grid shown per image instead of global:
+	works, but the toggle action at View > Show Grid no longer reflects the current state.
+	that's because there should be an event handling for when the current image changes to adjust that.
+	Not that I care, as the idea is to remove that command from there and add it into a dockable.
+
+	relevant files:
+		display/gimpcanvasgrid -> where grid drawing is made
+		core/gimpgrid -> where new property was set. If one is set here, it is automatically saved on the xcf
+		widgets/gimpgrideditor -> UI for "Image > Configure Greedo"
+		dialogs/grid-dialog -> big level of indirection. Creates the GTK window but delegates actual contruction to the widget
+		actions/view-commands -> the actual handler for the "View > Show Greedo" toggle action
+
+
+gimp docks locking shortcut button on the dock:
+	missing visual cue by icon swap
+
+cool snippets
+
+	g_warning ("%s: UI manager '%s' has now widget at path '%s'",
+					 G_STRFUNC, dialog_ui_manager->name, dialog_ui_path);

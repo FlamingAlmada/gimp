@@ -99,7 +99,10 @@ struct _GimpDockbookPrivate
    */
   GList          *dockables;
 
+	GtkWidget *button_container;
   GtkWidget      *menu_button;
+	GtkWidget      *lock_button;
+	GtkImage  *lock_image;
 };
 
 
@@ -126,8 +129,13 @@ static gboolean     gimp_dockbook_popup_menu                  (GtkWidget      *w
 static gboolean     gimp_dockbook_menu_button_press           (GimpDockbook   *dockbook,
                                                                GdkEventButton *bevent,
                                                                GtkWidget      *button);
+static gboolean     gimp_dockbook_lock_button_press           (GimpDockbook   *dockbook,
+                                                               GdkEventButton *bevent,
+                                                               GtkWidget      *button);
+
 static gboolean     gimp_dockbook_show_menu                   (GimpDockbook   *dockbook);
 static void         gimp_dockbook_menu_end                    (GimpDockable   *dockable);
+static gboolean     gimp_dockbook_lock_current_dock                   (GimpDockbook   *dockbook);
 static void         gimp_dockbook_dockable_added              (GimpDockbook   *dockbook,
                                                                GimpDockable   *dockable);
 static void         gimp_dockbook_dockable_removed            (GimpDockbook   *dockbook,
@@ -274,26 +282,56 @@ gimp_dockbook_init (GimpDockbook *dockbook)
                      dialog_target_table, G_N_ELEMENTS (dialog_target_table),
                      GDK_ACTION_MOVE);
 
-  /* Menu button */
-  dockbook->p->menu_button = gtk_button_new ();
-  gtk_widget_set_can_focus (dockbook->p->menu_button, FALSE);
-  gtk_button_set_relief (GTK_BUTTON (dockbook->p->menu_button),
-                         GTK_RELIEF_NONE);
-  gtk_notebook_set_action_widget (notebook,
-                                  dockbook->p->menu_button,
-                                  GTK_PACK_END);
-  gtk_widget_show (dockbook->p->menu_button);
+  dockbook->p->button_container = gtk_hbox_new(TRUE, 1);
+	gtk_widget_show( dockbook->p->button_container );
 
-  image = gtk_image_new_from_stock (GIMP_STOCK_MENU_LEFT, GTK_ICON_SIZE_MENU);
-  gtk_container_add (GTK_CONTAINER (dockbook->p->menu_button), image);
-  gtk_widget_show (image);
 
-  gimp_help_set_help_data (dockbook->p->menu_button, _("Configure this tab"),
-                           GIMP_HELP_DOCK_TAB_MENU);
+	/* lock button */
+	dockbook->p->lock_button = gtk_button_new ();
+	gtk_widget_set_can_focus (dockbook->p->lock_button, FALSE);
+	gtk_button_set_relief (GTK_BUTTON (dockbook->p->lock_button),
+												 GTK_RELIEF_NONE);
+	gtk_widget_show (dockbook->p->lock_button);
 
-  g_signal_connect_swapped (dockbook->p->menu_button, "button-press-event",
-                            G_CALLBACK (gimp_dockbook_menu_button_press),
-                            dockbook);
+	image = gtk_image_new_from_file( "themes/Default/images/stock-lock-16.png" );
+	dockbook->p->lock_image = image;
+	gtk_container_add (GTK_CONTAINER (dockbook->p->lock_button), image);
+	gtk_widget_show (image);
+
+	gimp_help_set_help_data (dockbook->p->lock_button, _("Lock this tab"),
+													 GIMP_HELP_DOCK_TAB_MENU);
+
+	g_signal_connect_swapped (dockbook->p->lock_button, "button-press-event",
+														G_CALLBACK(gimp_dockbook_lock_button_press),
+														dockbook);
+  gtk_container_add( GTK_CONTAINER(dockbook->p->button_container), dockbook->p->lock_button );
+
+	/* Menu button */
+	dockbook->p->menu_button = gtk_button_new ();
+	gtk_widget_set_can_focus (dockbook->p->menu_button, FALSE);
+	gtk_button_set_relief (GTK_BUTTON (dockbook->p->menu_button),
+												 GTK_RELIEF_NONE);
+	gtk_widget_show (dockbook->p->menu_button);
+
+	image = gtk_image_new_from_stock (GIMP_STOCK_MENU_LEFT, GTK_ICON_SIZE_MENU);
+	gtk_container_add (GTK_CONTAINER (dockbook->p->menu_button), image);
+	gtk_widget_show (image);
+
+	gimp_help_set_help_data (dockbook->p->menu_button, _("Configure this tab"),
+													 GIMP_HELP_DOCK_TAB_MENU);
+
+	g_signal_connect_swapped (dockbook->p->menu_button, "button-press-event",
+														G_CALLBACK (gimp_dockbook_menu_button_press),
+														dockbook);
+	gtk_container_add( GTK_CONTAINER(dockbook->p->button_container), dockbook->p->menu_button );
+
+
+  // Set the tab-control's action widget to the container with the two action buttons
+	gtk_notebook_set_action_widget (notebook,
+																	dockbook->p->button_container,
+																	GTK_PACK_END);
+
+
 }
 
 static void
@@ -452,6 +490,20 @@ gimp_dockbook_menu_button_press (GimpDockbook   *dockbook,
 
   return handled;
 }
+
+static gboolean
+gimp_dockbook_lock_button_press (GimpDockbook   *dockbook,
+                                 GdkEventButton *bevent,
+                                 GtkWidget      *button)
+{
+  gboolean handled = FALSE;
+
+  if (bevent->button == 1 && bevent->type == GDK_BUTTON_PRESS)
+    handled = gimp_dockbook_lock_current_dock(dockbook);
+
+  return handled;
+}
+
 
 static void
 gimp_dockbook_menu_position (GtkMenu  *menu,
@@ -619,6 +671,30 @@ gimp_dockbook_menu_end (GimpDockable *dockable)
   /*  release gimp_dockbook_show_menu()'s references  */
   g_object_set_data (G_OBJECT (dockable), GIMP_DOCKABLE_DETACH_REF_KEY, NULL);
   g_object_unref (dockable);
+}
+
+static gboolean
+gimp_dockbook_lock_current_dock (GimpDockbook *dockbook)
+{
+  GimpDockable  *dockable            = NULL;
+  gint           page_num            = -1;
+
+  page_num = gtk_notebook_get_current_page (GTK_NOTEBOOK (dockbook));
+  dockable = GIMP_DOCKABLE (gtk_notebook_get_nth_page (GTK_NOTEBOOK (dockbook),
+                                                       page_num));
+
+  if( gimp_dockable_is_locked( dockable ) ){
+		gimp_dockable_set_locked( dockable, FALSE );
+		gtk_image_set_from_file( dockbook->p->lock_image, "themes/Default/images/stock-lock-open-16.png" );
+		gimp_help_set_help_data( dockbook->p->lock_button, _("This tab is unlocked"), GIMP_HELP_DOCK_TAB_MENU );
+	}
+	else{
+		gimp_dockable_set_locked( dockable, TRUE );
+		gtk_image_set_from_file( dockbook->p->lock_image, "themes/Default/images/stock-lock-16.png" );
+		gimp_help_set_help_data( dockbook->p->lock_button, _("This tab is locked"), GIMP_HELP_DOCK_TAB_MENU );
+	}
+
+  return TRUE;
 }
 
 static void
@@ -939,7 +1015,7 @@ gimp_dockbook_add (GimpDockbook *dockbook,
                                           dockable,
                                           position);
 
-  gimp_dockbook_update_auto_tab_style (dockbook);  
+  gimp_dockbook_update_auto_tab_style (dockbook);
 
   /* Create the new tab widget, it will get the correct tab style now */
   tab_widget = gimp_dockbook_create_tab_widget (dockbook, dockable);
@@ -1678,5 +1754,5 @@ static const gchar *
 gimp_dockbook_get_tab_style_name (GimpTabStyle tab_style)
 {
   return g_enum_get_value (g_type_class_peek (GIMP_TYPE_TAB_STYLE),
-                           tab_style)->value_name;  
+                           tab_style)->value_name;
 }

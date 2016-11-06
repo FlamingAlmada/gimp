@@ -273,7 +273,6 @@ G_BEGIN_DECLS
 #define GIMP_STOCK_TEXTURE                  "gimp-texture"
 #define GIMP_STOCK_USER_MANUAL              "gimp-user-manual"
 
-
 /*  missing icons:  */
 
 #define GIMP_STOCK_BRUSH                    GIMP_STOCK_TOOL_PAINTBRUSH
